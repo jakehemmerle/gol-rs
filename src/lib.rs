@@ -1,29 +1,31 @@
 //! Game of Life
 
-// #![cfg_attr(not(test), no_std)]
+#![cfg_attr(not(test), no_std)]
+#![cfg_attr(not(test), no_main)]
 
 const SIZE: usize = 10;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum Cell {
+pub enum GolCell {
     Dead = 0,
     Alive,
 }
 
-pub type Matrix = [[Cell; SIZE]; SIZE];
+pub type Matrix = [[GolCell; SIZE]; SIZE];
 
-static mut MATRIX1: Matrix = [[Cell::Dead; SIZE]; SIZE];
-static mut MATRIX2: Matrix = [[Cell::Dead; SIZE]; SIZE];
+static mut MATRIX1: Matrix = [[GolCell::Dead; SIZE]; SIZE];
+static mut MATRIX2: Matrix = [[GolCell::Dead; SIZE]; SIZE];
 
 pub struct GameBoard {
     pub current_state: &'static mut Matrix,
     temp_state: &'static mut Matrix,
 }
 
-// #[panic_handler]
-// pub const fn panic_handler(_: &core::panic::PanicInfo) -> ! {
-//    loop {}
-// }
+#[cfg(not(test))]
+#[panic_handler]
+pub fn panic_handler(_: &core::panic::PanicInfo) -> ! {
+   loop {}
+}
 
 impl GameBoard {
     pub fn new() -> Self {
@@ -42,18 +44,18 @@ impl GameBoard {
             for x in 0..SIZE {
                 let alive_neighbours = self.count_alive_neighbours(y, x);
                 self.temp_state[y][x] = match self.current_state[y][x] {
-                    Cell::Dead => {
+                    GolCell::Dead => {
                         if alive_neighbours == 3 {
-                            Cell::Alive
+                            GolCell::Alive
                         } else {
-                            Cell::Dead
+                            GolCell::Dead
                         }
                     }
-                    Cell::Alive => {
+                    GolCell::Alive => {
                         if alive_neighbours < 2 || alive_neighbours > 3 {
-                            Cell::Dead
+                            GolCell::Dead
                         } else {
-                            Cell::Alive
+                            GolCell::Alive
                         }
                     }
                 };
@@ -72,14 +74,9 @@ impl GameBoard {
         let x_above = if x == 0 { SIZE - 1 } else { x - 1 };
         let x_below = if x == SIZE - 1 { 0 } else { x + 1 };
 
-        // print all coordinate pairs in a 3x3 grid
-        println!("({}, {}),  ({}, {}), ({}, {})", y_above, x_above, y_above, x, y_above, x_below);
-        println!("({}, {}),  ({}, {}), ({}, {})", y, x_above, y, x, y, x_below);
-        println!("({}, {}),  ({}, {}), ({}, {})", y_below, x_above, y_below, x, y_below, x_below);
-
         let mut count = 0;
-        let mut update_count = |cell: Cell| {
-            if cell == Cell::Alive {
+        let mut update_count = |cell: GolCell| {
+            if cell == GolCell::Alive {
                 count += 1;
             }
         };
@@ -106,8 +103,8 @@ mod tests {
         for row in board {
             for cell in row {
                 match cell {
-                    Cell::Dead => print!("-"),
-                    Cell::Alive => print!("O"),
+                    GolCell::Dead => print!("-"),
+                    GolCell::Alive => print!("O"),
                 }
             }
             println!();
@@ -119,11 +116,11 @@ mod tests {
         let mut game_board = GameBoard::new();
 
         // set an initial basic glider
-        game_board.current_state[0][1] = Cell::Alive;
-        game_board.current_state[1][2] = Cell::Alive;
-        game_board.current_state[2][1] = Cell::Alive;
-        game_board.current_state[2][0] = Cell::Alive;
-        game_board.current_state[2][2] = Cell::Alive;
+        game_board.current_state[0][1] = GolCell::Alive;
+        game_board.current_state[1][2] = GolCell::Alive;
+        game_board.current_state[2][1] = GolCell::Alive;
+        game_board.current_state[2][0] = GolCell::Alive;
+        game_board.current_state[2][2] = GolCell::Alive;
 
         // print intial state
         print_board(game_board.current_state);
@@ -133,8 +130,7 @@ mod tests {
             game_board.go_to_next_state();
             print_board(game_board.current_state);
             // delay 100 ms using std
-            std::thread::sleep(std::time::Duration::from_millis(100));
-
+            // std::thread::sleep(std::time::Duration::from_millis(100));
         }
     }
 }
